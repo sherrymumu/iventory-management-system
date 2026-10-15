@@ -22,7 +22,7 @@ export default defineConfig({
       resolvers: [ElementPlusResolver()],
     }),
     process.env.NODE_ENV === 'production' && visualizer({
-      open: true,
+      open: false,
       filename: 'dist/stats.html'
     })
   ],

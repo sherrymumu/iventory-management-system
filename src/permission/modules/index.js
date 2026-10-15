@@ -15,18 +15,17 @@
 //   ...infrastructure,
 //   ...personal,
 // ]
-// todo: 自动导入 由于是函数自动导入数据 所以需要手动设置模块顺序
-const modulesSort = ['home', 'demo', 'user', 'system', 'infrastructure', 'personal']
+// 自动导入菜单权限定义：当前演示仅保留 wms 模块，其余模块保留后期联调位置
+const modulesSort = ['wms']
+// const modulesSort = ['wms', 'home', 'demo', 'user', 'system', 'infrastructure', 'personal']
 export const permissions = []
 const permissionFiles = import.meta.glob('./*/index.js', { eager: true })
-for (const key in permissionFiles) {
-  const list = permissionFiles[key].default
-  const name = key.replace(/\.\/|\/index.js/g, '')
-  for (let i = 0; i < list.length; i++) {
-    const permission = list[i];
-    const index = modulesSort.indexOf(name)
-    if (index !== -1) {
-      permissions[index] = permission
-    }
+
+// 收集所有模块菜单
+for (const name of modulesSort) {
+  const filePath = `./${name}/index.js`
+  if (permissionFiles[filePath]) {
+    const list = permissionFiles[filePath].default || []
+    permissions.push(...list)
   }
 }

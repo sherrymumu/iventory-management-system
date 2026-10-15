@@ -72,28 +72,46 @@ const parseRemotePermission = (list) => {
   })
   return result
 }
+// 是否使用前端本地配置路由（Demo模式），为 true 时直接根据前端权限文件加载页面
+const USE_LOCAL_PERMISSIONS = true
+
 /**
  * 获取权限数据
  */
 const getPermissionData = async () => {
-  const r = await loginPermissionApi()
-  if (r) {
-    const permissionStore = usePermissionStore()
+  const permissionStore = usePermissionStore()
+
+  if (USE_LOCAL_PERMISSIONS) {
     permissionStore.loaded = true
-    permissionStore.permissionValues = r.data.permissionValues
+    permissionStore.permissionValues = ['*'] // 演示模式开放所有功能点
 
-    // todo：这里决定是本地路由还是后端路由
-    // let permissions = filterTree(localPermissions, item => validatePermission(r.data.permissionValues, item.permission))
-    let permissions = parseRemotePermission(r.data.permissions)
-
-    permissions = parseDataToTree(permissions, 'value')
+    const permissions = parseDataToTree(localPermissions, 'value')
     permissionStore.permissions = permissions
 
-    let menus = filterTree(permissions, item => item.show && item.type !== PERMISSION_TYPE_ENUM.BUTTON)
+    const menus = filterTree(permissions, item => item.show && item.type !== PERMISSION_TYPE_ENUM.BUTTON)
     const menuStore = useMenuStore()
     menuStore.menus = menus
+    return { code: 0, data: permissions }
   }
-  return r
+
+  // 【后端接口预留位置】：对接真实后端动态权限 GET /api/auth/permission
+  try {
+    const r = await loginPermissionApi()
+    if (r && r.data) {
+      permissionStore.loaded = true
+      permissionStore.permissionValues = r.data.permissionValues
+      let permissions = parseRemotePermission(r.data.permissions)
+      permissions = parseDataToTree(permissions, 'value')
+      permissionStore.permissions = permissions
+      let menus = filterTree(permissions, item => item.show && item.type !== PERMISSION_TYPE_ENUM.BUTTON)
+      const menuStore = useMenuStore()
+      menuStore.menus = menus
+      return r
+    }
+  } catch (e) {
+    console.error(e)
+  }
+  return null
 }
 
 /**
@@ -102,7 +120,9 @@ const getPermissionData = async () => {
  * @returns
  */
 const hasPermission = (permission) => {
-  if (!permission) return printWarn('权限code不能为空')
+  if (!permission) return true
+  const list = usePermissionStore().permissionValues
+  if (list && list.includes('*')) return true
   let result = false
   const separator = permission.indexOf('|') === -1 ? '&' : '|'
   const permissions = permission.split(separator)
@@ -115,7 +135,6 @@ const hasPermission = (permission) => {
       fn = 'some'
       break
   }
-  const list = usePermissionStore().permissionValues
   result = fn && permissions[fn](item => {
     return list.indexOf(item) !== -1
   })

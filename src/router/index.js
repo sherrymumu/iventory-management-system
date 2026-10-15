@@ -1,10 +1,10 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
-import { constants, layout } from './route'
+import { constantRoutes } from './route'
 import { beforeEachHandler, afterEachHandler } from './interceptor'
 
 const router = createRouter({
   history: createWebHashHistory(import.meta.env.BASE_URL || '/'),
-  routes: [...constants, layout]
+  routes: constantRoutes
 })
 
 router.beforeEach((to, from, next) => beforeEachHandler(to, from, next, router))

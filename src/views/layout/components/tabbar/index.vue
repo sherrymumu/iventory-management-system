@@ -9,7 +9,7 @@
 <script setup>
 import { useTabStore } from '@/stores'
 import { useNamespace } from '@/hooks'
-import { onBeforeMount } from 'vue'
+import { onBeforeMount, watch } from 'vue'
 
 const n = useNamespace('tabbar')
 
@@ -20,21 +20,23 @@ const tabStore = useTabStore()
 const { active, tabs } = storeToRefs(tabStore)
 
 const onClick = ({ index }) => {
-  const { name, query, params} = tabs.value[+index]
-  router.push({ name, query, params})
+  const currentTab = tabs.value[+index]
+  if (currentTab) {
+    if (currentTab.name) {
+      router.push({ name: currentTab.name, query: currentTab.query, params: currentTab.params })
+    } else if (currentTab.path) {
+      router.push(currentTab.path)
+    }
+  }
 }
 
 const onRemove = (value) => {
   tabStore.handleRemove([value])
 }
 
-onBeforeRouteUpdate((to) => {
-  tabStore.handleChange(to)
-})
-
-onBeforeMount(() => {
+watch(() => route.fullPath, () => {
   tabStore.handleChange(route)
-})
+}, { immediate: true })
 </script>
 
 <style lang="scss" scoped>

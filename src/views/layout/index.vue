@@ -14,34 +14,49 @@
           <template #top>
             <Brand :collapse="collapse"></Brand>
           </template>
-          <Menu :data="menus" :active="active" :collapse="collapse"></Menu>
+          <Menu :data="displayMenus" :active="active" :collapse="collapse"></Menu>
         </Sidebar>
       </template>
       <Tabbar :class="n.e('tabbar')"></Tabbar>
       <View v-if="!refresh" transition="left-in-right-out"></View>
     </Frame>
-    <Websocket></Websocket>
-    <Identify></Identify>
+    <!-- 后期联调预留组件：Websocket与Identify验证 -->
+    <!-- <Websocket></Websocket> -->
+    <!-- <Identify></Identify> -->
   </div>
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { View } from '@/components'
-import { Frame, Headbar, Sidebar, Tabbar, Brand, Crumb, Menu, MenuCollapse, Websocket, Identify } from './components'
+import { Frame, Headbar, Sidebar, Tabbar, Brand, Crumb, Menu, MenuCollapse } from './components'
 import { useMenuStore, useSystemStore } from '@/stores'
 import { useNamespace } from '@/hooks'
+import { constantRoutes } from '@/router/route'
 
 const n = useNamespace('layout')
 
 const route = useRoute()
 
 const menuStore = useMenuStore()
-const { menus, active, collapse, } = storeToRefs(menuStore)
+const { menus, active, collapse } = storeToRefs(menuStore)
 const systemStore = useSystemStore()
 const { refresh } = storeToRefs(systemStore)
 
+// 菜单数据计算：优先使用动态权限接口菜单；接口未联调时自动读取 constantRoutes 静态路由
+const displayMenus = computed(() => {
+  if (menus.value && menus.value.length > 0) {
+    return menus.value
+  }
+  const rootRoute = constantRoutes.find(r => r.path === '/')
+  if (rootRoute && rootRoute.children) {
+    return rootRoute.children.filter(item => item.meta && item.meta.show !== false)
+  }
+  return []
+})
+
 watchEffect(() => {
-  active.value = route.name + ''
+  active.value = route.path + ''
 })
 
 const mode = ref('horizontal')

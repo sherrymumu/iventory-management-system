@@ -31,12 +31,14 @@ export const useTabStore = defineStore('tab', {
      * @param {*} route
      */
     handleChange(route) {
-      const meta = route.meta
-      let val = `${route.name}&${meta.value}`
-      if (meta.tab) {
+      const meta = route.meta || {}
+      let val = `${route.name}&${meta.value || route.name}`
+      const isTab = meta.tab !== undefined ? meta.tab : true
+      if (isTab && route.name) {
         if (meta.multiple) {
-          const queryStr = JSON.stringify(route.query)
-          const paramsStr = JSON.stringify(route.params)
+          // 增加 fallback 防止 query 或 params 为 undefined
+          const queryStr = JSON.stringify(route.query || {})
+          const paramsStr = JSON.stringify(route.params || {})
           val += `&${queryStr}&${paramsStr}`
         } else {
           val += `&{}&{}`
@@ -44,21 +46,24 @@ export const useTabStore = defineStore('tab', {
         // 如果不存在则添加
         if (this.tabs.every(item => item.value !== val)) {
           // 自定义标题
-          const label = meta.label + (route.query.custom ? `-${route.query.custom}` : '')
+          const title = meta.label || meta.title || route.name
+          // 使用可选链 (?.) 防止 route.query 为 undefined 时报错
+          const label = title + (route.query?.custom ? `-${route.query.custom}` : '')
           const tab = {
             value: val,
-            menuValue: meta.value,
+            menuValue: meta.value || route.name,
             label: label,
             name: route.name,
             path: route.path,
-            query: route.query,
-            params: route.params
+            query: route.query || {},
+            params: route.params || {}
           }
           this.tabs.push(tab)
         }
       }
       this.active = val
     },
+
     /**
      * 删除tabs
      * @param {*} values
@@ -72,13 +77,16 @@ export const useTabStore = defineStore('tab', {
       if (tabs.length === 0) {
         tabs = [this.tabs[0]]
       }
+      this.tabs = tabs
       // 若删除的包含当前页则跳转其他页
       if (tabs.every(item => item.value !== this.active)) {
-        const { name, query, params } = tabs[tabs.length - 1]
-        router.push({ name, query, params })
+        const last = tabs[tabs.length - 1]
+        if (last.name) {
+          router.push({ name: last.name, query: last.query, params: last.params })
+        } else if (last.path) {
+          router.push(last.path)
+        }
       }
-      // 设置当前未删除的标签页
-      this.tabs = JSON.parse(JSON.stringify(tabs))
     },
     /**
      * 清除标签页

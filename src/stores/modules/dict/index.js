@@ -30,11 +30,19 @@ export const useDictStore = defineStore('dict', {
   }),
   actions: {
     async getDict() {
-      const codes = getDictCodes()
-      const r = await dictSubSelectListApi(codes)
-      if (r) {
+      try {
+        const codes = getDictCodes()
+        const r = await dictSubSelectListApi(codes)
+        if (r && r.data) {
+          this.loaded = true
+          this.dicts = formatDicts(r.data)
+        } else {
+          this.loaded = true
+          this.dicts = {}
+        }
+      } catch (e) {
         this.loaded = true
-        this.dicts = formatDicts(r.data)
+        this.dicts = {}
       }
       return this.dicts
     },

@@ -79,7 +79,8 @@ const onViewAll = () => {
 
 onBeforeMount(() => {
   page.value.current = 1
-  noticeStore.getData()
+  // 【预留后端消息通知联调接口位置】
+  // noticeStore.getData()
 })
 </script>
 

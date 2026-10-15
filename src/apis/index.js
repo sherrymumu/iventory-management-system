@@ -12,5 +12,6 @@ export * from './demo'
 export * from './user'
 export * from './system'
 export * from './infrastructure'
+export * from './wms'
 
 export { handleResponse }

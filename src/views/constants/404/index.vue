@@ -25,7 +25,7 @@ const { logout } = useRootStore()
 const endTime = ref(10)
 const timer = ref(null)
 
-const handleToHome = () => router.push({ name: 'redirect', replace: true })
+const handleToHome = () => router.push({ path: '/wms/dashboard', replace: true })
 
 const handleInterval = () => {
   timer.value = setInterval(() => {

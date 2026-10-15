@@ -78,25 +78,16 @@ const handleDynamic = async (to, _from, next, router) => {
 let isFirstVisit = true // 是否首次访问
 export const beforeEachHandler = async (to, from, next, router) => {
   NProgress.start()
-  document.title = `Agile Admin ${to.meta.label || document.title}`
-  // 判断是否是搜首次访问
-  if (isFirstVisit) {
-    router.addRoute({ path: '/:pathMatch(.*)', redirect: { name: '401' } })
-    isFirstVisit = false
-  }
-  // 判断是否是静态路由
-  if (constants.some(item => item.path === to.path)) {
-    if (validateToken()) { // 如果是静态路由 且 token 有效 则跳转至登录页
-      next({ name: 'redirect', replace: true })
-    } else {
-      next()
-    }
-  } else {
-    const { loaded, getDict } = useDictStore()
-    if (!loaded) await getDict()
+  document.title = `${to.meta.label || document.title}`
+  // 纯静态路由模式直接放行（支持快速离线演示与静态页面跳转）
+  next()
 
-    await handleDynamic(to, from, next, router)
-  }
+  /*
+  // 【后端动态路由与字典联调预留位置】
+  const { loaded, getDict } = useDictStore()
+  if (!loaded) await getDict()
+  await handleDynamic(to, from, next, router)
+  */
 }
 
 export const afterEachHandler = (to, _from, _failure, _router) => {

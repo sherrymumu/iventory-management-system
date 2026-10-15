@@ -13,26 +13,35 @@
 </template>
 
 <script setup>
-import { useAdminerStore, useRootStore } from '@/stores'
+import { useAdminerStore, useRootStore, useAuthStore } from '@/stores'
 import { useNamespace } from '@/hooks'
 
 const n = useNamespace('user')
 
 const router = useRouter()
 const adminerStore = useAdminerStore()
+const authStore = useAuthStore()
 const { nickname, username, avatar } = storeToRefs(adminerStore)
 const { logout } = useRootStore()
 
 const name = computed(() => {
-  const name = nickname.value || username.value
-  return name ? name.substring(0, 1) : ''
+  const currentNick = authStore.currentUser?.nickname
+  const currentAcc = authStore.currentUser?.username
+  const name = nickname.value || username.value || currentNick || currentAcc || '管理员'
+  return name ? name.substring(0, 1) : '管'
 })
 
 const onCommand = async (command) => {
   if (command === 'personal') {
-    router.push({ name: 'personal' })
+    // 【后端接口预留位置】：个人中心
+    ElMessage.info('个人中心（联调接口预留）')
   } else if (command === 'logout') {
-    await logout()
+    // 【后端接口预留位置】：退出登录
+    try {
+      await logout()
+    } catch {
+      authStore.clear()
+    }
     router.push({ name: 'login' })
   }
 }

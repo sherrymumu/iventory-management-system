@@ -6,7 +6,7 @@
     :collapse="collapse">
     <MenuSub
       v-for="item in data"
-      :key="item.id"
+      :key="item.value || item.name || item.id || item.path"
       :data="item"
       :collapse="collapse" />
   </el-menu>

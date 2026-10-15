@@ -4,7 +4,7 @@
       <el-breadcrumb-item
         v-for="item in list"
         :key="item.value"
-        :to="item.name ? { name: item.name, query: item.query, params: item.params } : ''">
+        :to="item.name ? { name: item.name, query: item.query, params: item.params } : (item.path ? item.path : '')">
         {{ item.label }}
       </el-breadcrumb-item>
     </transition-group>
@@ -49,7 +49,12 @@ const handleCrumb = (permissions) => {
 
 watchEffect(() => {
   list.value = []
-  list.value = handleCrumb(permissions.value).reverse()
+  const crumbList = handleCrumb(permissions.value).reverse()
+  if (crumbList.length > 0) {
+    list.value = crumbList
+  } else if (route.meta && route.meta.title) {
+    list.value = [{ value: route.path, label: route.meta.title, name: route.name }]
+  }
 })
 </script>
 
