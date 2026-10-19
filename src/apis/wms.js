@@ -39,8 +39,8 @@ const unwrap = (response) => {
   return body
 }
 
-const get = (url, params) => unwrap(http.get(url, { params }))
-const post = (url, data) => unwrap(http.post(url, data))
+const get = async (url, params) => unwrap(await http.get(url, { params }))
+const post = async (url, data) => unwrap(await http.post(url, data))
 
 // 模拟异步请求延迟
 const mockDelay = (ms = 120) => new Promise(resolve => setTimeout(resolve, ms))

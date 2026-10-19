@@ -12,7 +12,7 @@
     <el-row :gutter="16" class="metrics-row">
       <!-- 1. 设备总数 -->
       <el-col :xs="24" :sm="12" :md="12" :lg="4" :xl="4" class="col-metric-item">
-        <div class="metric-card clickable" @click="goStatus">
+        <div class="metric-card clickable" @click="goDeviceList">
           <div class="metric-label">设备总数</div>
           <div class="metric-value font-bold text-main">1,286</div>
           <div class="metric-footer text-muted">
@@ -23,7 +23,7 @@
 
       <!-- 2. 在库数量 -->
       <el-col :xs="24" :sm="12" :md="12" :lg="5" :xl="5" class="col-metric-item">
-        <div class="metric-card clickable" @click="goStatus">
+        <div class="metric-card clickable" @click="goDeviceList">
           <div class="metric-label">在库数量</div>
           <div class="metric-value font-bold text-success">954</div>
           <div class="metric-footer text-muted">
@@ -34,7 +34,7 @@
 
       <!-- 3. 借出数量 -->
       <el-col :xs="24" :sm="12" :md="12" :lg="5" :xl="5" class="col-metric-item">
-        <div class="metric-card clickable" @click="goStatus">
+        <div class="metric-card clickable" @click="goDeviceList">
           <div class="metric-label">借出数量</div>
           <div class="metric-value font-bold text-primary">288</div>
           <div class="metric-footer text-muted">
@@ -45,7 +45,7 @@
 
       <!-- 4. 异常设备 -->
       <el-col :xs="24" :sm="12" :md="12" :lg="5" :xl="5" class="col-metric-item">
-        <div class="metric-card clickable" @click="goStatus">
+        <div class="metric-card clickable" @click="goDeviceList">
           <div class="metric-label">异常设备</div>
           <div class="metric-value font-bold text-danger">44</div>
           <div class="metric-footer text-muted">
@@ -56,7 +56,7 @@
 
       <!-- 5. 本月借还次数 -->
       <el-col :xs="24" :sm="12" :md="12" :lg="5" :xl="5" class="col-metric-item">
-        <div class="metric-card clickable" @click="goStatus">
+        <div class="metric-card clickable" @click="goDeviceList">
           <div class="metric-label">本月借还次数</div>
           <div class="metric-value font-bold text-main">156</div>
           <div class="metric-footer text-muted">
@@ -94,7 +94,7 @@
     <el-row :gutter="16" class="charts-row">
       <!-- 1. 设备分类统计 (左侧环形图) -->
       <el-col :xs="24" :lg="6" class="chart-col">
-        <div class="section-card chart-card">
+        <div class="section-card chart-card clickable" @click="goStatus" title="点击查看设备状态统计台账">
           <div class="chart-header">
             <span class="title-txt">设备分类统计</span>
           </div>
@@ -110,11 +110,11 @@
         </div>
       </el-col>
 
-      <!-- 2. 设备库存&时段可归还数量对比 与 出入库趋势 (右侧一体化/组合柱状图) -->
-      <el-col :xs="24" :lg="18" class="chart-col">
-        <div class="section-card chart-card">
+      <!-- 2. 设备库存 & 时段可归还数量对比 -->
+      <el-col :xs="24" :lg="9" class="chart-col">
+        <div class="section-card chart-card clickable" @click="goStock" title="点击查看设备库存统计">
           <div class="chart-header-combined">
-            <div class="header-split-left">
+            <div class="header-split-left" style="width: 100%;">
               <span class="title-txt">设备库存</span>
               <el-date-picker
                 v-model="compareDateRange"
@@ -127,9 +127,35 @@
                 clearable
                 class="compare-date-picker"
                 @change="handleCompareDateChange"
+                @click.stop
               />
             </div>
-            <div class="header-split-right">
+          </div>
+
+          <div class="charts-combined-body">
+            <div class="sub-chart-left" style="flex: 1;">
+              <div ref="compareBarRef" class="chart-instance"></div>
+              <div class="compare-chart-legend">
+                <span class="legend-chip">
+                  <i class="color-sq sq-blue"></i> 当前库存数量
+                </span>
+                <span class="legend-chip">
+                  <i class="color-sq sq-green"></i> 时段可归还数量
+                </span>
+                <span class="legend-chip">
+                  <i class="color-sq sq-total"></i> 总数量（当前库存+时段可归还）
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </el-col>
+
+      <!-- 3. 出入库趋势 -->
+      <el-col :xs="24" :lg="9" class="chart-col">
+        <div class="section-card chart-card clickable" @click="goTrend" title="点击查看出入库趋势统计">
+          <div class="chart-header-combined">
+            <div class="header-split-left" style="width: 100%;">
               <span class="title-txt">出入库趋势 ({{ timeRangeLabel }})</span>
               <div class="trend-legend">
                 <span class="legend-chip">
@@ -143,25 +169,7 @@
           </div>
 
           <div class="charts-combined-body">
-            <!-- 柱图1：对比柱状图 -->
-            <div class="sub-chart-left">
-              <div ref="compareBarRef" class="chart-instance"></div>
-              <!-- 对比柱状图底部图例 -->
-              <div class="compare-chart-legend">
-                <span class="legend-chip">
-                  <i class="color-sq sq-blue"></i> 当前库存数量
-                </span>
-                <span class="legend-chip">
-                  <i class="color-sq sq-orange"></i> 时段可归还数量
-                </span>
-              </div>
-            </div>
-
-            <!-- 垂直分割线 -->
-            <div class="charts-divider"></div>
-
-            <!-- 柱图2：出入库趋势 -->
-            <div class="sub-chart-right">
+            <div class="sub-chart-right" style="flex: 1;">
               <div ref="trendBarRef" class="chart-instance"></div>
             </div>
           </div>
@@ -173,7 +181,7 @@
     <el-row :gutter="16" class="status-tables-row">
       <!-- 1. 低库存预警 -->
       <el-col :xs="24" :lg="8" class="status-col">
-        <div class="section-card">
+        <div class="section-card clickable" @click="goLow" title="点击查看低库存设备台账">
           <div class="card-title-bar">
             <div class="title-left">
               <span class="dot dot-red"></span>
@@ -248,7 +256,7 @@
 
       <!-- 3. 逾期单据 -->
       <el-col :xs="24" :lg="8" class="status-col">
-        <div class="section-card">
+        <div class="section-card clickable" @click="goOverdue" title="点击查看逾期设备台账">
           <div class="card-title-bar">
             <div class="title-left">
               <span class="dot dot-yellow"></span>
@@ -288,6 +296,11 @@ import { getDeviceTypeListApi } from '@/apis/wms'
 
 const router = useRouter()
 const goStatus = () => router.push('/wms/statistics/status')
+const goStock = () => router.push('/wms/statistics/stock')
+const goDeviceList = () => router.push('/wms/device-list')
+const goTrend = () => router.push('/wms/statistics/trend')
+const goLow = () => router.push('/wms/statistics/low')
+const goOverdue = () => router.push('/wms/statistics/overdue')
 
 const timeRange = ref('year')
 const timeRangeLabel = computed(() => {
@@ -442,6 +455,10 @@ const updateCompareChart = () => {
       {
         name: '时段可归还数量',
         data: compareChartData.value.returnable
+      },
+      {
+        name: '总数量',
+        data: compareChartData.value.stock.map((v, i) => v + compareChartData.value.returnable[i])
       }
     ]
   })
@@ -477,26 +494,40 @@ const initCompareChart = () => {
       axisLabel: { color: '#94a3b8', fontSize: 11 }
     },
     series: [
-    {
-      name: '当前库存数量',
-      type: 'bar',
-      stack: 'Total', // ✨ 新增：设置相同的 stack 名称使其堆叠
-      barWidth: '30%', // 可以适当调整柱子宽度
-      itemStyle: {
-        color: '#2b7fff' // 主色调，表示实际在库库存
+      {
+        name: '当前库存数量',
+        type: 'bar',
+        stack: 'Total',
+        barWidth: '36%',
+        itemStyle: { color: '#2b7fff' },
+        data: compareChartData.value.stock
       },
-      data: [120, 200, 150, 80, 70, 110, 130] // 替换为您的实际变量数据
-    },
-    {
-      name: '时段可归还数量',
-      type: 'bar',
-      stack: 'Total', // ✨ 新增：与上方设置一样的 stack 名称
-      itemStyle: {
-        color: '#67c23a' // 辅助色（如绿色），区分可归还部分
+      {
+        name: '时段可归还数量',
+        type: 'bar',
+        stack: 'Total',
+        itemStyle: { color: '#67c23a' },
+        label: {
+          show: true,
+          position: 'top',
+          color: '#64748b',
+          fontWeight: 'normal',
+          fontSize: 10,
+          formatter: (params) => {
+            const idx = params.dataIndex
+            return (compareChartData.value.stock[idx] || 0) + (compareChartData.value.returnable[idx] || 0)
+          }
+        },
+        data: compareChartData.value.returnable
       },
-      data: [30, 40, 20, 10, 15, 25, 30] // 替换为您的实际变量数据
-    }
-  ]
+      {
+        name: '总数量',
+        type: 'line',
+        symbol: 'none',
+        lineStyle: { opacity: 0 },
+        data: compareChartData.value.stock.map((v, i) => v + compareChartData.value.returnable[i])
+      }
+    ]
   }
   compareChart.setOption(option)
 }
@@ -760,6 +791,15 @@ onBeforeUnmount(() => {
   padding: 10px 14px;
   box-sizing: border-box;
 }
+.section-card.clickable {
+  cursor: pointer;
+  transition: box-shadow 0.2s, transform 0.2s, border-color 0.2s;
+}
+.section-card.clickable:hover {
+  box-shadow: 0 4px 16px rgba(22, 119, 255, 0.18);
+  transform: translateY(-2px);
+  border-color: #bcd4ff;
+}
 
 /* 状态表格 */
 .status-tables-row {
@@ -933,6 +973,14 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
 }
+.chart-card.clickable {
+  cursor: pointer;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.chart-card.clickable:hover {
+  box-shadow: 0 4px 16px rgba(22, 119, 255, 0.18);
+  transform: translateY(-2px);
+}
 .chart-header {
   margin-bottom: 6px;
 }
@@ -1060,8 +1108,9 @@ onBeforeUnmount(() => {
   border-radius: 2px;
   display: inline-block;
 }
-.sq-blue { background-color: #5b8ff9; }
-.sq-orange { background-color: #ffd8bf; }
+.sq-blue { background-color: #2b7fff; }
+.sq-green { background-color: #67c23a; }
+.sq-total { background-color: #fa541c; }
 
 .text-right { text-align: right; }
 .text-center { text-align: center; }

@@ -39,7 +39,28 @@ export default defineConfig({
       // 库管系统后端适配层：inventory-ms REST 接口
       '^/api/wms': {
         target: 'http://localhost:8151',
-        changeOrigin: true
+        changeOrigin: true,
+        // 后端会同时下发两个同名 MS_SID 会话 Cookie（后者为空会话），
+        // 浏览器只保留最后一个导致登录态丢失；此处去重仅保留第一个有效会话
+        configure: (proxy) => {
+          proxy.on('proxyRes', (proxyRes) => {
+            const cookies = proxyRes.headers['set-cookie']
+            if (!Array.isArray(cookies)) return
+            const seenMsSid = new Set()
+            const kept = []
+            for (const cookie of cookies) {
+              const name = cookie.slice(0, cookie.indexOf('='))
+              if (name === 'MS_SID') {
+                if (seenMsSid.has(name)) continue
+                seenMsSid.add(name)
+              }
+              kept.push(cookie)
+            }
+            if (kept.length !== cookies.length) {
+              proxyRes.headers['set-cookie'] = kept
+            }
+          })
+        }
       },
       '^/slipper/websocket': {
         target: 'https://admin.gumingchen.icu',

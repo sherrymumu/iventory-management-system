@@ -146,7 +146,6 @@
 import { Container, Pagination, SearchToolbar } from '@/components'
 import { getDeviceTypeListApi, saveDeviceTypeApi, deleteDeviceTypeApi } from '@/apis/wms'
 import { ElMessage } from 'element-plus'
-import * as XLSX from 'xlsx'
 
 const loading = ref(false)
 const saving = ref(false)
@@ -163,6 +162,7 @@ const page = reactive({
 
 // 树形表格数据：大类聚合其下子类数量，支持按名称筛选
 const treeTableData = computed(() => {
+  console.log(allData.value)
   const list = allData.value
   const byId = {}
   list.forEach(i => { byId[i.id] = { ...i } })
