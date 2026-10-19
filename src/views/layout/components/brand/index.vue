@@ -26,7 +26,7 @@ const props = defineProps({
 
 const adminerStore = useAdminerStore()
 const { tenant } = storeToRefs(adminerStore)
-const name = computed(() => tenant.value.name || '智能设备库管系统')
+const name = computed(() => tenant.value.name || '设备管理系统')
 const logo = computed(() => tenant.value.logo)
 </script>
 

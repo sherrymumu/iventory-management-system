@@ -22,8 +22,8 @@ const loginContent = `<template>
     <el-card class="w-500 login-box-card" shadow="always">
       <div class="mb-20 text-center">
         <div class="system-logo-badge">WMS</div>
-        <div class="title">智能设备库管系统</div>
-        <div class="sub-title">纯前端演示版本</div>
+        <div class="title">设备管理系统</div>
+        // <div class="sub-title">纯前端演示版本</div>
       </div>
 
       <el-form ref="formRef" :model="form" :rules="rules" @keyup.enter="onSubmit" size="large">

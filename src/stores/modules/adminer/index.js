@@ -16,7 +16,7 @@ export const useAdminerStore = defineStore('adminer', {
     posts: '设备保障部负责人',
     dept: '技术运维保障中心',
     tenant: {
-      name: '智能设备库管系统',
+      name: '设备管理系统',
       logo: ''
     },
     token: '',
@@ -29,16 +29,14 @@ export const useAdminerStore = defineStore('adminer', {
      */
     async getAdminer() {
       const authStore = useAuthStore()
+      // 归一化系统名称，修正持久化缓存中残留的旧值
+      this.tenant = { name: '设备管理系统', logo: '' }
       if (authStore.currentUser && authStore.currentUser.username) {
         // 演示模式直接使用登录角色数据
         this.username = authStore.currentUser.username
         this.nickname = authStore.currentUser.nickname
         this.dept = authStore.currentUser.dept
         this.roles = authStore.currentRole
-        this.tenant = {
-          name: '智能设备库管系统',
-          logo: ''
-        }
         return this.$state
       }
 

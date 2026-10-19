@@ -10,7 +10,6 @@ import Dict from './dict/index.vue'
 import Upload from './upload/index.vue'
 import UploadImage from './upload-image/index.vue'
 import Region from './region/index.vue'
-import TenantSidebar from './tenant-sidebar/index.vue'
 
 import CountTo from './count-to/index.vue'
 import Echarts from './echarts/index.vue'
@@ -28,7 +27,6 @@ export {
   Upload,
   UploadImage,
   Region,
-  TenantSidebar,
 
   CountTo,
   Echarts,

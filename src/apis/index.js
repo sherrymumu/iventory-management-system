@@ -7,10 +7,6 @@ http.interceptors.request.use(requestInterceptor, requestRejected)
 http.interceptors.response.use(responseInterceptor, responseRejected)
 
 export * from './auth'
-export * from './home'
-export * from './demo'
-export * from './user'
-export * from './system'
 export * from './infrastructure'
 export * from './wms'
 
