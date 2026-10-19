@@ -316,6 +316,7 @@ const submitNormalReturn = async () => {
   try {
     const returnDevices = currentOut.value.devices.filter(d => normalForm.selectedSns.includes(d.sn))
     const res = await returnNormalDevicesApi({
+      outboundId: currentOut.value.id,
       outNo: currentOut.value.outNo,
       returnType: normalForm.returnType,
       devices: returnDevices,
@@ -341,6 +342,7 @@ const submitAnomalyRecord = async () => {
   try {
     const dev = currentOut.value.devices.find(d => d.sn === anomalyForm.deviceSn)
     const res = await createAnomalyRecordApi({
+      outboundId: currentOut.value.id,
       outNo: currentOut.value.outNo,
       deviceSn: anomalyForm.deviceSn,
       deviceName: dev?.name || '未知设备',

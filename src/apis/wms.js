@@ -1,22 +1,60 @@
 /**
  * 库管系统 API 模块
- * 规范化封装前端调用逻辑，当前接入前端本地 Mock Store 保证离线演示，
- * 同时预留统一的 axios 请求方法和真实后端 API 路径，对接时切换开关或替换请求即可。
+ *
+ * 两种数据源：
+ * 1. USE_REAL_API = true  -> 走真实后端 /api/wms/**（由 vite 代理到 inventory-ms:8151），
+ *    后端为适配层统一返回 { code, message, data }，code === 0 表示成功。
+ * 2. USE_REAL_API = false -> 走前端本地 Mock Store，用于无后端环境下的离线演示。
+ *
+ * 开关通过环境变量 VITE_WMS_REAL_API 控制，未配置时默认 true（对接真实后端）。
  */
 
+import axios from 'axios'
+import { ElMessage } from 'element-plus'
 import { WmsStore } from '@/common/wmsMockData'
 
 // 后端联调开关：设置为 true 时走真实后端接口（通过 axios）
-export const USE_REAL_API = false
+export const USE_REAL_API = String(import.meta.env.VITE_WMS_REAL_API ?? 'true') === 'true'
+
+const WMS_BASE_URL = '/api/wms'
+
+// 库管接口走独立实例：后端使用 admin 会话 Cookie 鉴权，必须携带凭证
+const http = axios.create({
+  baseURL: WMS_BASE_URL,
+  headers: { 'Content-Type': 'application/json' },
+  withCredentials: true,
+  timeout: 30000
+})
+
+/** 拆包：把后端 { code, message, data } 还原为前端约定的返回体，失败时提示并返回 null */
+const unwrap = (response) => {
+  const body = response && response.data
+  if (!body) {
+    return null
+  }
+  if (body.code !== 0 && body.code !== 200) {
+    ElMessage.error({ message: body.message || '服务器开小差，稍后再试~', grouping: true })
+    return null
+  }
+  return body
+}
+
+const get = (url, params) => unwrap(http.get(url, { params }))
+const post = (url, data) => unwrap(http.post(url, data))
 
 // 模拟异步请求延迟
 const mockDelay = (ms = 120) => new Promise(resolve => setTimeout(resolve, ms))
 
+/* ================= 0. 登录态 ================= */
+
+export const loginApi = (data) => post('/auth/login', data)
+export const logoutApi = () => post('/auth/logout')
+export const currentUserApi = () => get('/auth/current')
+
 /* ================= 1. 设备类型与台账 API ================= */
 export const getDeviceTypeListApi = async (params = {}) => {
   if (USE_REAL_API) {
-    // 【后端接口预留位置】：GET /api/wms/device-type/list
-    // return http.get('/api/wms/device-type/list', { params })
+    return get('/device-type/list', params)
   }
   await mockDelay()
   let list = WmsStore.getDeviceTypes()
@@ -31,8 +69,7 @@ export const getDeviceTypeListApi = async (params = {}) => {
 
 export const saveDeviceTypeApi = async (data) => {
   if (USE_REAL_API) {
-    // 【后端接口预留位置】：POST /api/wms/device-type/save
-    // return http.post('/api/wms/device-type/save', data)
+    return post('/device-type/save', data)
   }
   await mockDelay()
   const list = WmsStore.getDeviceTypes()
@@ -57,8 +94,7 @@ export const saveDeviceTypeApi = async (data) => {
 
 export const deleteDeviceTypeApi = async (id) => {
   if (USE_REAL_API) {
-    // 【后端接口预留位置】：DELETE /api/wms/device-type/delete
-    // return http.delete(`/api/wms/device-type/delete/${id}`)
+    return post('/device-type/delete', { id })
   }
   await mockDelay()
   const list = WmsStore.getDeviceTypes()
@@ -69,43 +105,29 @@ export const deleteDeviceTypeApi = async (id) => {
 
 export const getDeviceListApi = async (params = {}) => {
   if (USE_REAL_API) {
-    // 【后端接口预留位置】：GET /api/wms/device/list
-    // return http.get('/api/wms/device/list', { params })
+    return get('/device/list', params)
   }
   await mockDelay()
   let list = WmsStore.getDevices()
-  if (params.sn) {
-    const kw = params.sn.toLowerCase()
-    list = list.filter(i => i.sn && i.sn.toLowerCase().includes(kw))
-  }
-  if (params.name) {
-    const kw = params.name.toLowerCase()
-    list = list.filter(i => i.name && i.name.toLowerCase().includes(kw))
-  }
-  if (params.typeId) {
-    list = list.filter(i => i.typeId === params.typeId)
-  }
-  if (params.location) {
-    const kw = params.location.toLowerCase()
-    list = list.filter(i => i.location && i.location.toLowerCase().includes(kw))
-  }
-  if (params.brand) {
-    list = list.filter(i => i.brand === params.brand)
-  }
-  if (params.model) {
-    const kw = params.model.toLowerCase()
-    list = list.filter(i => i.model && i.model.toLowerCase().includes(kw))
+  if (params.keyword) {
+    const kw = params.keyword.toLowerCase()
+    list = list.filter(i => (i.sn && i.sn.toLowerCase().includes(kw)) || (i.name && i.name.toLowerCase().includes(kw)) || (i.cardNo && i.cardNo.toLowerCase().includes(kw)))
   }
   if (params.status) {
     list = list.filter(i => i.status === params.status)
+  }
+  if (params.location) {
+    list = list.filter(i => i.location === params.location)
+  }
+  if (params.typeId) {
+    list = list.filter(i => i.typeId === params.typeId)
   }
   return { code: 0, message: 'success', data: { list, total: list.length } }
 }
 
 export const saveDeviceApi = async (data) => {
   if (USE_REAL_API) {
-    // 【后端接口预留位置】：POST /api/wms/device/save
-    // return http.post('/api/wms/device/save', data)
+    return post('/device/save', data)
   }
   await mockDelay()
   const list = WmsStore.getDevices()
@@ -122,10 +144,19 @@ export const saveDeviceApi = async (data) => {
   return { code: 0, message: '设备保存成功', data }
 }
 
+export const deleteDeviceApi = async (id, extra = {}) => {
+  if (USE_REAL_API) {
+    return post('/device/delete', { id, ...extra })
+  }
+  await mockDelay()
+  const list = WmsStore.getDevices()
+  WmsStore.saveDevices(list.filter(i => i.id !== id))
+  return { code: 0, message: '删除成功' }
+}
+
 export const importDevicesBatchApi = async (deviceList) => {
   if (USE_REAL_API) {
-    // 【后端接口预留位置】：POST /api/wms/device/import-excel
-    // return http.post('/api/wms/device/import-excel', { list: deviceList })
+    return post('/device/import-excel', { list: deviceList })
   }
   await mockDelay(200)
   const current = WmsStore.getDevices()
@@ -137,8 +168,7 @@ export const importDevicesBatchApi = async (deviceList) => {
 /* ================= 2. 预约与出库流程 API ================= */
 export const getApplyOrderListApi = async (params = {}) => {
   if (USE_REAL_API) {
-    // 【后端接口预留位置】：GET /api/wms/apply-order/list
-    // return http.get('/api/wms/apply-order/list', { params })
+    return get('/apply-order/list', params)
   }
   await mockDelay()
   let list = WmsStore.getOrders()
@@ -153,8 +183,7 @@ export const getApplyOrderListApi = async (params = {}) => {
 
 export const createApplyOrderApi = async (orderData) => {
   if (USE_REAL_API) {
-    // 【后端接口预留位置】：POST /api/wms/apply-order/create
-    // return http.post('/api/wms/apply-order/create', orderData)
+    return post('/apply-order/create', orderData)
   }
   await mockDelay()
   const list = WmsStore.getOrders()
@@ -172,11 +201,11 @@ export const createApplyOrderApi = async (orderData) => {
 }
 
 // 库管核对分支判断
-export const checkOutboundOrderApi = async ({ orderId, passed, lackHandling, note }) => {
+export const checkOutboundOrderApi = async (payload) => {
   if (USE_REAL_API) {
-    // 【后端接口预留位置】：POST /api/wms/apply-order/check
-    // return http.post('/api/wms/apply-order/check', { orderId, passed, lackHandling, note })
+    return post('/apply-order/check', payload)
   }
+  const { orderId, passed, lackHandling, note } = payload
   await mockDelay()
   const list = WmsStore.getOrders()
   const order = list.find(i => i.id === orderId)
@@ -241,11 +270,11 @@ export const checkOutboundOrderApi = async ({ orderId, passed, lackHandling, not
 }
 
 // 扫码核对设备
-export const scanDeviceOutboundApi = async ({ outNo, sn }) => {
+export const scanDeviceOutboundApi = async (payload) => {
   if (USE_REAL_API) {
-    // 【后端接口预留位置】：POST /api/wms/outbound/scan-device
-    // return http.post('/api/wms/outbound/scan-device', { outNo, sn })
+    return post('/outbound/scan-device', payload)
   }
+  const { outNo, sn } = payload
   await mockDelay()
   const outbounds = WmsStore.getOutbounds()
   const out = outbounds.find(i => i.outNo === outNo)
@@ -264,11 +293,11 @@ export const scanDeviceOutboundApi = async ({ outNo, sn }) => {
 }
 
 // 签字领取出库
-export const signAndFinishOutboundApi = async ({ outNo, signer, signatureImage }) => {
+export const signAndFinishOutboundApi = async (payload) => {
   if (USE_REAL_API) {
-    // 【后端接口预留位置】：POST /api/wms/outbound/sign
-    // return http.post('/api/wms/outbound/sign', { outNo, signer, signatureImage })
+    return post('/outbound/sign', payload)
   }
+  const { outNo, signer, signatureImage } = payload
   await mockDelay()
   const outbounds = WmsStore.getOutbounds()
   const out = outbounds.find(i => i.outNo === outNo)
@@ -305,8 +334,7 @@ export const signAndFinishOutboundApi = async ({ outNo, signer, signatureImage }
 
 export const getOutboundListApi = async (params = {}) => {
   if (USE_REAL_API) {
-    // 【后端接口预留位置】：GET /api/wms/outbound/list
-    // return http.get('/api/wms/outbound/list', { params })
+    return get('/outbound/list', params)
   }
   await mockDelay()
   let list = WmsStore.getOutbounds()
@@ -321,8 +349,7 @@ export const getOutboundListApi = async (params = {}) => {
 /* ================= 3. 归还入库流程 API ================= */
 export const getInboundListApi = async (params = {}) => {
   if (USE_REAL_API) {
-    // 【后端接口预留位置】：GET /api/wms/inbound/list
-    // return http.get('/api/wms/inbound/list', { params })
+    return get('/inbound/list', params)
   }
   await mockDelay()
   let list = WmsStore.getInbounds()
@@ -330,11 +357,11 @@ export const getInboundListApi = async (params = {}) => {
 }
 
 // 正常归还入库（全部归还 / 分批归还）
-export const returnNormalDevicesApi = async ({ outNo, returnType, devices, signer, remark }) => {
+export const returnNormalDevicesApi = async (payload) => {
   if (USE_REAL_API) {
-    // 【后端接口预留位置】：POST /api/wms/inbound/return-normal
-    // return http.post('/api/wms/inbound/return-normal', { outNo, returnType, devices, signer, remark })
+    return post('/inbound/return-normal', payload)
   }
+  const { outNo, returnType, devices, signer, remark } = payload
   await mockDelay()
   const inbounds = WmsStore.getInbounds()
   const inNo = `IN-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-${Math.floor(Math.random()*900+100)}`
@@ -372,8 +399,7 @@ export const returnNormalDevicesApi = async ({ outNo, returnType, devices, signe
 /* ================= 4. 异常处置与终身码 API ================= */
 export const getAnomalyListApi = async (params = {}) => {
   if (USE_REAL_API) {
-    // 【后端接口预留位置】：GET /api/wms/anomaly/list
-    // return http.get('/api/wms/anomaly/list', { params })
+    return get('/anomaly/list', params)
   }
   await mockDelay()
   let list = WmsStore.getAnomalies()
@@ -385,8 +411,7 @@ export const getAnomalyListApi = async (params = {}) => {
 // 发起异常登记
 export const createAnomalyRecordApi = async (data) => {
   if (USE_REAL_API) {
-    // 【后端接口预留位置】：POST /api/wms/anomaly/create
-    // return http.post('/api/wms/anomaly/create', data)
+    return post('/anomaly/create', data)
   }
   await mockDelay()
   const list = WmsStore.getAnomalies()
@@ -414,11 +439,11 @@ export const createAnomalyRecordApi = async (data) => {
 }
 
 // 领导审核签字
-export const signAnomalyLeaderApi = async ({ anomalyNo, leaderName, note }) => {
+export const signAnomalyLeaderApi = async (payload) => {
   if (USE_REAL_API) {
-    // 【后端接口预留位置】：POST /api/wms/anomaly/leader-sign
-    // return http.post('/api/wms/anomaly/leader-sign', { anomalyNo, leaderName, note })
+    return post('/anomaly/leader-sign', payload)
   }
+  const { anomalyNo, leaderName, note } = payload
   await mockDelay()
   const list = WmsStore.getAnomalies()
   const item = list.find(i => i.anomalyNo === anomalyNo)
@@ -433,11 +458,11 @@ export const signAnomalyLeaderApi = async ({ anomalyNo, leaderName, note }) => {
 }
 
 // 确定处置方案并更新终身码/入库
-export const resolveAnomalyActionApi = async ({ anomalyNo, solution, newLifeCode, compensationAmount }) => {
+export const resolveAnomalyActionApi = async (payload) => {
   if (USE_REAL_API) {
-    // 【后端接口预留位置】：POST /api/wms/anomaly/resolve
-    // return http.post('/api/wms/anomaly/resolve', { anomalyNo, solution, newLifeCode, compensationAmount })
+    return post('/anomaly/resolve', payload)
   }
+  const { anomalyNo, solution, newLifeCode, compensationAmount } = payload
   await mockDelay()
   const list = WmsStore.getAnomalies()
   const item = list.find(i => i.anomalyNo === anomalyNo)
@@ -478,8 +503,7 @@ export const resolveAnomalyActionApi = async ({ anomalyNo, solution, newLifeCode
 /* ================= 5. 逾期管理与催办 API ================= */
 export const getOverdueListApi = async () => {
   if (USE_REAL_API) {
-    // 【后端接口预留位置】：GET /api/wms/overdue/list
-    // return http.get('/api/wms/overdue/list')
+    return get('/overdue/list')
   }
   await mockDelay()
   const list = WmsStore.getOverdues()
@@ -488,8 +512,7 @@ export const getOverdueListApi = async () => {
 
 export const submitOverdueFollowApi = async (followData) => {
   if (USE_REAL_API) {
-    // 【后端接口预留位置】：POST /api/wms/overdue/follow
-    // return http.post('/api/wms/overdue/follow', followData)
+    return post('/overdue/follow', followData)
   }
   await mockDelay()
   const list = WmsStore.getOverdues()

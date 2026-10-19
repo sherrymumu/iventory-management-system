@@ -36,6 +36,11 @@ export default defineConfig({
     port: 9585,
     open: true,
     proxy: {
+      // 库管系统后端适配层：inventory-ms REST 接口
+      '^/api/wms': {
+        target: 'http://localhost:8151',
+        changeOrigin: true
+      },
       '^/slipper/websocket': {
         target: 'https://admin.gumingchen.icu',
         // target: 'http://localhost:8806',

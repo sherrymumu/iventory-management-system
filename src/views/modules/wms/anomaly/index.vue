@@ -361,6 +361,7 @@ const submitResolveAction = async () => {
   try {
     const res = await resolveAnomalyActionApi({
       anomalyNo: selectedRow.value.anomalyNo,
+      id: selectedRow.value.id,
       solution: resolveForm.solution,
       newLifeCode: resolveForm.newLifeCode,
       compensationAmount: resolveForm.compensationAmount

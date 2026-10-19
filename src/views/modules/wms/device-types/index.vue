@@ -7,6 +7,9 @@
         </el-form-item>
         <template #actions>
           <el-button type="primary" @click="openAddTypeModal">新增设备类型</el-button>
+          <el-divider direction="vertical" />
+          <el-button icon="Download" :disabled="!treeTableData.length" @click="exportCsv">导出 CSV</el-button>
+          <el-button type="success" icon="Document" :disabled="!treeTableData.length" @click="exportXlsx">导出 Excel</el-button>
         </template>
       </SearchToolbar>
     </el-card>
@@ -20,6 +23,8 @@
         row-key="id"
         :tree-props="{ children: 'children' }"
         default-expand-all
+        show-summary
+        :summary-method="getSummary"
       >
         <el-table-column prop="name" label="类型名称" min-width="200">
           <template #default="{ row }">
@@ -141,6 +146,7 @@
 import { Container, Pagination, SearchToolbar } from '@/components'
 import { getDeviceTypeListApi, saveDeviceTypeApi, deleteDeviceTypeApi } from '@/apis/wms'
 import { ElMessage } from 'element-plus'
+import * as XLSX from 'xlsx'
 
 const loading = ref(false)
 const saving = ref(false)
@@ -320,6 +326,112 @@ const handleDelete = async (row) => {
   } catch (e) {
     ElMessage.error('删除失败')
   }
+}
+
+// ===== 设备类型统计导出（CSV / Excel，含合计行）=====
+// 仅统计叶子子类，避免与大类的聚合行重复计算
+const leafRows = computed(() =>
+  allData.value.filter(i => !allData.value.some(c => c.pid === i.id))
+)
+
+const exportColumns = [
+  { key: 'name', label: '类型名称' },
+  { key: 'total', label: '数量' },
+  { key: 'inStock', label: '在库数量' },
+  { key: 'lent', label: '借出数量' },
+  { key: 'reserved', label: '预约数量' },
+  { key: 'minStock', label: '低阈值预警(台)' },
+  { key: 'remark', label: '备注' }
+]
+
+const sumFields = ['total', 'inStock', 'lent', 'reserved']
+
+const buildExportPayload = () => {
+  const data = leafRows.value
+  const sums = { name: '合计' }
+  sumFields.forEach(f => {
+    sums[f] = data.reduce((acc, r) => acc + (Number(r[f]) || 0), 0)
+  })
+  return { data, sums }
+}
+
+const formatCell = (row, key) => {
+  const v = row[key]
+  if (key === 'minStock') return `≤ ${Number(v) || 0} 台`
+  return v ?? ''
+}
+
+const dateStamp = () => {
+  const d = new Date()
+  const p = n => String(n).padStart(2, '0')
+  return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`
+}
+
+const downloadBlob = (blob, filename) => {
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+}
+
+const exportCsv = () => {
+  if (!leafRows.value.length) {
+    ElMessage.warning('暂无数据可导出')
+    return
+  }
+  const { data, sums } = buildExportPayload()
+  const header = exportColumns.map(c => c.label)
+  const body = data.map(r => exportColumns.map(c => formatCell(r, c.key)))
+  const totalRow = exportColumns.map(c => (c.key === 'name' ? '合计' : (sums[c.key] ?? '')))
+  const csv = [header, ...body, totalRow]
+    .map(row => row.map(cell => {
+      const s = String(cell ?? '')
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
+    }).join(','))
+    .join('\r\n')
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' })
+  downloadBlob(blob, `设备类型统计_${dateStamp()}.csv`)
+  ElMessage.success('CSV 导出成功')
+}
+
+const exportXlsx = () => {
+  if (!leafRows.value.length) {
+    ElMessage.warning('暂无数据可导出')
+    return
+  }
+  const { data, sums } = buildExportPayload()
+  const header = exportColumns.map(c => c.label)
+  const body = data.map(r => exportColumns.map(c => formatCell(r, c.key)))
+  const totalRow = exportColumns.map(c => (c.key === 'name' ? '合计' : (sums[c.key] ?? '')))
+  const ws = XLSX.utils.aoa_to_sheet([header, ...body, totalRow])
+  const wb = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb, ws, '设备类型统计')
+  const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' })
+  const blob = new Blob([wbout], { type: 'application/octet-stream' })
+  downloadBlob(blob, `设备类型统计_${dateStamp()}.xlsx`)
+  ElMessage.success('Excel 导出成功')
+}
+
+// 合计行：仅对数值列求和（基于叶子子类，避免与大类聚合行重复计算）
+const getSummary = ({ columns }) => {
+  const sums = []
+  columns.forEach((col, index) => {
+    if (index === 0) {
+      sums[index] = '合计'
+      return
+    }
+    const prop = col.property
+    if (sumFields.includes(prop)) {
+      sums[index] = leafRows.value.reduce((acc, r) => acc + (Number(r[prop]) || 0), 0)
+    } else {
+      sums[index] = ''
+    }
+  })
+  return sums
 }
 
 onMounted(() => {

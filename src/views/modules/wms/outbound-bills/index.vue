@@ -338,6 +338,7 @@ const handleScan = async () => {
     return
   }
   const res = await scanDeviceOutboundApi({
+    outboundId: currentOutbound.value.id,
     outNo: currentOutbound.value.outNo,
     sn: scanSnInput.value.trim()
   })
@@ -354,6 +355,7 @@ const simulateScanAll = async () => {
   if (!currentOutbound.value) return
   for (const d of currentOutbound.value.devices) {
     await scanDeviceOutboundApi({
+      outboundId: currentOutbound.value.id,
       outNo: currentOutbound.value.outNo,
       sn: d.sn
     })
@@ -377,6 +379,7 @@ const submitSignAndOutbound = async () => {
   try {
     const signatureDataUrl = canvasRef.value ? canvasRef.value.toDataURL() : ''
     const res = await signAndFinishOutboundApi({
+      outboundId: currentOutbound.value.id,
       outNo: currentOutbound.value.outNo,
       signer: signerName.value.trim(),
       signatureImage: signatureDataUrl
