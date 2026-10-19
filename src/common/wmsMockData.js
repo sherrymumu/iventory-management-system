@@ -22,42 +22,49 @@ const setLocal = (key, val) => {
   }
 }
 
-// 1. 设备类型定义
+// 1. 设备类型定义（层级结构：大类 pid=0，子类挂到对应大类下）
 export const initialDeviceTypes = [
-  { id: 1, name: '4K超清摄像机', total: 28, inStock: 15, lent: 10, reserved: 3, minStock: 10, remark: '高画质现场转播主摄' },
-  { id: 2, name: '专业影视镜头组', total: 35, inStock: 20, lent: 13, reserved: 2, minStock: 10, remark: '大光圈定焦/变焦镜头组' },
-  { id: 3, name: '便携式导播台', total: 12, inStock: 3, lent: 8, reserved: 1, minStock: 10, remark: '多通道切换输出' },
-  { id: 4, name: '航拍无人机套装', total: 15, inStock: 8, lent: 6, reserved: 1, minStock: 10, remark: '含备用电池及控制器' },
-  { id: 5, name: '无线高保真领夹麦', total: 50, inStock: 28, lent: 18, reserved: 4, minStock: 10, remark: '一拖二双通道' },
-  { id: 6, name: '4G/5G传输背包', total: 16, inStock: 1, lent: 14, reserved: 1, minStock: 10, remark: '低延时高聚合移动图传' },
-  { id: 7, name: '便携监视器', total: 20, inStock: 9, lent: 9, reserved: 2, minStock: 10, remark: '7寸高亮监看屏' },
-  { id: 8, name: '影视级补光灯组', total: 30, inStock: 15, lent: 13, reserved: 2, minStock: 10, remark: '双色温LED柔光灯组' },
-  { id: 9, name: '上网卡(移动数据包)', total: 40, inStock: 25, lent: 15, reserved: 0, minStock: 10, remark: '单独管理，不使用二维码出库' },
+  // 大类（parent）
+  { id: 101, name: '摄像录制设备', pid: 0, total: 43, inStock: 23, lent: 16, reserved: 4, minStock: 10, remark: '摄像机与航拍设备' },
+  { id: 102, name: '镜头与光学器材', pid: 0, total: 85, inStock: 44, lent: 35, reserved: 6, minStock: 10, remark: '镜头、监视器、灯光' },
+  { id: 103, name: '音频采集设备', pid: 0, total: 50, inStock: 28, lent: 18, reserved: 4, minStock: 10, remark: '无线领夹麦等' },
+  { id: 104, name: '导播与传输设备', pid: 0, total: 28, inStock: 4, lent: 22, reserved: 2, minStock: 10, remark: '导播台与移动图传' },
+  { id: 105, name: '网络与连接设备', pid: 0, total: 40, inStock: 25, lent: 15, reserved: 0, minStock: 10, remark: '上网卡等' },
+  // 子类（leaf，设备 typeId 直接引用这些 id）
+  { id: 1, name: '4K超清摄像机', pid: 101, total: 28, inStock: 15, lent: 10, reserved: 3, minStock: 10, remark: '高画质现场转播主摄' },
+  { id: 4, name: '航拍无人机套装', pid: 101, total: 15, inStock: 8, lent: 6, reserved: 1, minStock: 10, remark: '含备用电池及控制器' },
+  { id: 2, name: '专业影视镜头组', pid: 102, total: 35, inStock: 20, lent: 13, reserved: 2, minStock: 10, remark: '大光圈定焦/变焦镜头组' },
+  { id: 7, name: '便携监视器', pid: 102, total: 20, inStock: 9, lent: 9, reserved: 2, minStock: 10, remark: '7寸高亮监看屏' },
+  { id: 8, name: '影视级补光灯组', pid: 102, total: 30, inStock: 15, lent: 13, reserved: 2, minStock: 10, remark: '双色温LED柔光灯组' },
+  { id: 5, name: '无线高保真领夹麦', pid: 103, total: 50, inStock: 28, lent: 18, reserved: 4, minStock: 10, remark: '一拖二双通道' },
+  { id: 3, name: '便携式导播台', pid: 104, total: 12, inStock: 3, lent: 8, reserved: 1, minStock: 10, remark: '多通道切换输出' },
+  { id: 6, name: '4G/5G传输背包', pid: 104, total: 16, inStock: 1, lent: 14, reserved: 1, minStock: 10, remark: '低延时高聚合移动图传' },
+  { id: 9, name: '上网卡(移动数据包)', pid: 105, total: 40, inStock: 25, lent: 15, reserved: 0, minStock: 10, remark: '单独管理，不使用二维码出库' },
 ]
 
 // 2. 设备台账（包含SN、终身码、状态、存放位置等）
 export const initialDevices = [
-  { id: 101, sn: 'CAM-4K-2026-001', lifeCode: 'LC-2026-A101', name: '4K超清摄像机', typeId: 1, typeName: '4K超清摄像机', model: 'Sony FX6', location: '对外借出', status: '在库', dept: '', borrower: '', cardNo: 'C001-9921', createTime: '2026-01-10' },
-  { id: 102, sn: 'CAM-4K-2026-002', lifeCode: 'LC-2026-A102', name: '4K超清摄像机', typeId: 1, typeName: '4K超清摄像机', model: 'Sony FX6', location: '对外借出', status: '借出', dept: '新闻部', borrower: '张伟', cardNo: 'C001-9922', createTime: '2026-01-10' },
-  { id: 103, sn: 'CAM-4K-2026-003', lifeCode: 'LC-2026-A103', name: '4K超清摄像机', typeId: 1, typeName: '4K超清摄像机', model: 'Sony FX6', location: '技术支持', status: '已预约', dept: '专题部', borrower: '李娜', cardNo: 'C001-9923', createTime: '2026-01-10' },
-  { id: 104, sn: 'CAM-4K-2026-004', lifeCode: 'LC-2026-A104', name: '4K超清摄像机', typeId: 1, typeName: '4K超清摄像机', model: 'Sony FX9', location: '技术支持', status: '损坏', dept: '技术支持部', borrower: '', cardNo: 'C001-9924', createTime: '2026-01-12' },
-  { id: 105, sn: 'CAM-4K-2026-005', lifeCode: 'LC-2026-A105', name: '4K超清摄像机', typeId: 1, typeName: '4K超清摄像机', model: 'Sony FX9', location: '对外借出', status: '丢失', dept: '影视中心', borrower: '', cardNo: 'C001-9925', createTime: '2026-01-12' },
-  
-  { id: 106, sn: 'LENS-GM-2026-01', lifeCode: 'LC-2026-L01', name: '专业影视镜头组', typeId: 2, typeName: '专业影视镜头组', model: 'FE 24-70mm F2.8 GM II', location: '对外借出', status: '在库', dept: '', borrower: '', cardNo: 'L001-8811', createTime: '2026-02-01' },
-  { id: 107, sn: 'LENS-GM-2026-02', lifeCode: 'LC-2026-L02', name: '专业影视镜头组', typeId: 2, typeName: '专业影视镜头组', model: 'FE 70-200mm F2.8 GM OSS II', location: '对外借出', status: '借出', dept: '影视中心', borrower: '王强', cardNo: 'L001-8812', createTime: '2026-02-01' },
+  { id: 101, sn: 'CAM-4K-2026-001', lifeCode: 'LC-2026-A101', name: '4K超清摄像机', typeId: 1, typeName: '4K超清摄像机', brand: 'Sony', model: 'Sony FX6', location: '对外借出', status: '在库', dept: '', borrower: '', cardNo: 'C001-9921', createTime: '2026-01-10' },
+  { id: 102, sn: 'CAM-4K-2026-002', lifeCode: 'LC-2026-A102', name: '4K超清摄像机', typeId: 1, typeName: '4K超清摄像机', brand: 'Sony', model: 'Sony FX6', location: '对外借出', status: '借出', dept: '新闻部', borrower: '张伟', cardNo: 'C001-9922', createTime: '2026-01-10' },
+  { id: 103, sn: 'CAM-4K-2026-003', lifeCode: 'LC-2026-A103', name: '4K超清摄像机', typeId: 1, typeName: '4K超清摄像机', brand: 'Sony', model: 'Sony FX6', location: '技术支持', status: '已预约', dept: '专题部', borrower: '李娜', cardNo: 'C001-9923', createTime: '2026-01-10' },
+  { id: 104, sn: 'CAM-4K-2026-004', lifeCode: 'LC-2026-A104', name: '4K超清摄像机', typeId: 1, typeName: '4K超清摄像机', brand: 'Sony', model: 'Sony FX9', location: '技术支持', status: '损坏', dept: '技术支持部', borrower: '', cardNo: 'C001-9924', createTime: '2026-01-12' },
+  { id: 105, sn: 'CAM-4K-2026-005', lifeCode: 'LC-2026-A105', name: '4K超清摄像机', typeId: 1, typeName: '4K超清摄像机', brand: 'Sony', model: 'Sony FX9', location: '对外借出', status: '丢失', dept: '影视中心', borrower: '', cardNo: 'C001-9925', createTime: '2026-01-12' },
 
-  { id: 108, sn: 'BAG-5G-2026-001', lifeCode: 'LC-2026-B01', name: '4G/5G传输背包', typeId: 6, typeName: '4G/5G传输背包', model: 'TVU One 4K', location: '对外借出', status: '在库', dept: '', borrower: '', cardNo: 'B001-7701', createTime: '2026-03-05' },
-  { id: 109, sn: 'BAG-5G-2026-002', lifeCode: 'LC-2026-B02', name: '4G/5G传输背包', typeId: 6, typeName: '4G/5G传输背包', model: 'LiveU LU600', location: '对外借出', status: '在库', dept: '', borrower: '', cardNo: 'B001-7702', createTime: '2026-03-05' },
-  { id: 110, sn: 'BAG-5G-2026-003', lifeCode: 'LC-2026-B03', name: '4G/5G传输背包', typeId: 6, typeName: '4G/5G传输背包', model: 'LiveU LU600', location: '技术支持', status: '借出', dept: '突发新闻部', borrower: '周杰', cardNo: 'B001-7703', createTime: '2026-03-05' },
+  { id: 106, sn: 'LENS-GM-2026-01', lifeCode: 'LC-2026-L01', name: '专业影视镜头组', typeId: 2, typeName: '专业影视镜头组', brand: 'Sony', model: 'FE 24-70mm F2.8 GM II', location: '对外借出', status: '在库', dept: '', borrower: '', cardNo: 'L001-8811', createTime: '2026-02-01' },
+  { id: 107, sn: 'LENS-GM-2026-02', lifeCode: 'LC-2026-L02', name: '专业影视镜头组', typeId: 2, typeName: '专业影视镜头组', brand: 'Sony', model: 'FE 70-200mm F2.8 GM OSS II', location: '对外借出', status: '借出', dept: '影视中心', borrower: '王强', cardNo: 'L001-8812', createTime: '2026-02-01' },
 
-  { id: 111, sn: 'SWITCH-2026-01', lifeCode: 'LC-2026-S01', name: '便携式导播台', typeId: 3, typeName: '便携式导播台', model: 'Blackmagic ATEM Mini Pro', location: '技术支持', status: '在库', dept: '', borrower: '', cardNo: 'S001-6601', createTime: '2026-02-15' },
-  { id: 112, sn: 'DRONE-2026-01', lifeCode: 'LC-2026-D01', name: '航拍无人机套装', typeId: 4, typeName: '航拍无人机套装', model: 'DJI Mavic 3 Pro Cine', location: '对外借出', status: '在库', dept: '', borrower: '', cardNo: 'D001-5501', createTime: '2026-02-18' },
-  { id: 113, sn: 'MIC-2026-01', lifeCode: 'LC-2026-M01', name: '无线高保真领夹麦', typeId: 5, typeName: '无线高保真领夹麦', model: 'Sennheiser EW-DP', location: '对外借出', status: '在库', dept: '', borrower: '', cardNo: 'M001-4401', createTime: '2026-02-20' },
+  { id: 108, sn: 'BAG-5G-2026-001', lifeCode: 'LC-2026-B01', name: '4G/5G传输背包', typeId: 6, typeName: '4G/5G传输背包', brand: 'TVU', model: 'TVU One 4K', location: '对外借出', status: '在库', dept: '', borrower: '', cardNo: 'B001-7701', createTime: '2026-03-05' },
+  { id: 109, sn: 'BAG-5G-2026-002', lifeCode: 'LC-2026-B02', name: '4G/5G传输背包', typeId: 6, typeName: '4G/5G传输背包', brand: 'LiveU', model: 'LiveU LU600', location: '对外借出', status: '在库', dept: '', borrower: '', cardNo: 'B001-7702', createTime: '2026-03-05' },
+  { id: 110, sn: 'BAG-5G-2026-003', lifeCode: 'LC-2026-B03', name: '4G/5G传输背包', typeId: 6, typeName: '4G/5G传输背包', brand: 'LiveU', model: 'LiveU LU600', location: '技术支持', status: '借出', dept: '突发新闻部', borrower: '周杰', cardNo: 'B001-7703', createTime: '2026-03-05' },
+
+  { id: 111, sn: 'SWITCH-2026-01', lifeCode: 'LC-2026-S01', name: '便携式导播台', typeId: 3, typeName: '便携式导播台', brand: 'Blackmagic', model: 'Blackmagic ATEM Mini Pro', location: '技术支持', status: '在库', dept: '', borrower: '', cardNo: 'S001-6601', createTime: '2026-02-15' },
+  { id: 112, sn: 'DRONE-2026-01', lifeCode: 'LC-2026-D01', name: '航拍无人机套装', typeId: 4, typeName: '航拍无人机套装', brand: 'DJI', model: 'DJI Mavic 3 Pro Cine', location: '对外借出', status: '在库', dept: '', borrower: '', cardNo: 'D001-5501', createTime: '2026-02-18' },
+  { id: 113, sn: 'MIC-2026-01', lifeCode: 'LC-2026-M01', name: '无线高保真领夹麦', typeId: 5, typeName: '无线高保真领夹麦', brand: 'Sennheiser', model: 'Sennheiser EW-DP', location: '对外借出', status: '在库', dept: '', borrower: '', cardNo: 'M001-4401', createTime: '2026-02-20' },
 
   // 上网卡（单独管理，不使用二维码出库）
-  { id: 201, sn: 'SIM-CM-202601', lifeCode: '', name: '中国移动5G企业数据卡', typeId: 9, typeName: '上网卡(移动数据包)', model: '5G全网通-不限流', location: '技术支持', status: '借出', dept: '突发新闻部', borrower: '黄磊', cardNo: 'SIM89860401', operator: '中国移动', isSimCard: true, createTime: '2026-01-05' },
-  { id: 202, sn: 'SIM-CU-202602', lifeCode: '', name: '中国联通5G专线卡', typeId: 9, typeName: '上网卡(移动数据包)', model: '5G工业级物联网卡', location: '技术支持', status: '在库', dept: '', borrower: '', cardNo: 'SIM89860602', operator: '中国联通', isSimCard: true, createTime: '2026-01-05' },
-  { id: 203, sn: 'SIM-CT-202603', lifeCode: '', name: '中国电信5G高速卡', typeId: 9, typeName: '上网卡(移动数据包)', model: '天翼5G应急保障卡', location: '对外借出', status: '在库', dept: '', borrower: '', cardNo: 'SIM89860303', operator: '中国电信', isSimCard: true, createTime: '2026-01-05' },
+  { id: 201, sn: 'SIM-CM-202601', lifeCode: '', name: '中国移动5G企业数据卡', typeId: 9, typeName: '上网卡(移动数据包)', brand: '中国移动', model: '5G全网通-不限流', location: '技术支持', status: '借出', dept: '突发新闻部', borrower: '黄磊', cardNo: 'SIM89860401', operator: '中国移动', isSimCard: true, createTime: '2026-01-05' },
+  { id: 202, sn: 'SIM-CU-202602', lifeCode: '', name: '中国联通5G专线卡', typeId: 9, typeName: '上网卡(移动数据包)', brand: '中国联通', model: '5G工业级物联网卡', location: '技术支持', status: '在库', dept: '', borrower: '', cardNo: 'SIM89860602', operator: '中国联通', isSimCard: true, createTime: '2026-01-05' },
+  { id: 203, sn: 'SIM-CT-202603', lifeCode: '', name: '中国电信5G高速卡', typeId: 9, typeName: '上网卡(移动数据包)', brand: '中国电信', model: '天翼5G应急保障卡', location: '对外借出', status: '在库', dept: '', borrower: '', cardNo: 'SIM89860303', operator: '中国电信', isSimCard: true, createTime: '2026-01-05' },
 ]
 
 // 3. 预约单与出库单列表

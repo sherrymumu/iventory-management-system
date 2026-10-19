@@ -77,7 +77,82 @@ export default [
     ]
   },
 
-  // 2. 预约申请与出库管理
+  // 2.5 统计台账（一级菜单，与资产管理同级；下设 5 个二级统计页面）
+  {
+    label: '统计台账',
+    value: 1009,
+    icon: 'chart',
+    permission: 'wms:asset:statistics',
+    keepalive: true,
+    tab: true,
+    multiple: false,
+    show: true,
+    type: PERMISSION_TYPE_ENUM.CATALOG,
+    children: [
+      {
+        label: '设备状态统计台账',
+        value: 10091,
+        icon: 'menu',
+        permission: 'wms:asset:statistics:status',
+        keepalive: true,
+        tab: true,
+        multiple: false,
+        show: true,
+        type: PERMISSION_TYPE_ENUM.MENU,
+        route: { path: '/wms/statistics/status', name: 'wms-statistics-status', component: '/wms/statistics/status/index' }
+      },
+      {
+        label: '出入库趋势统计',
+        value: 10092,
+        icon: 'menu',
+        permission: 'wms:asset:statistics:trend',
+        keepalive: true,
+        tab: true,
+        multiple: false,
+        show: true,
+        type: PERMISSION_TYPE_ENUM.MENU,
+        route: { path: '/wms/statistics/trend', name: 'wms-statistics-trend', component: '/wms/statistics/trend/index' }
+      },
+      {
+        label: '设备库存统计',
+        value: 10093,
+        icon: 'menu',
+        permission: 'wms:asset:statistics:stock',
+        keepalive: true,
+        tab: true,
+        multiple: false,
+        show: true,
+        type: PERMISSION_TYPE_ENUM.MENU,
+        route: { path: '/wms/statistics/stock', name: 'wms-statistics-stock', component: '/wms/statistics/stock/index' }
+      },
+      {
+        label: '低库存设备台账',
+        value: 10094,
+        icon: 'menu',
+        permission: 'wms:asset:statistics:low',
+        keepalive: true,
+        tab: true,
+        multiple: false,
+        show: true,
+        type: PERMISSION_TYPE_ENUM.MENU,
+        route: { path: '/wms/statistics/low', name: 'wms-statistics-low', component: '/wms/statistics/low/index' }
+      },
+      {
+        label: '逾期设备台账',
+        value: 10095,
+        icon: 'time',
+        permission: 'wms:asset:statistics:overdue',
+        keepalive: true,
+        tab: true,
+        multiple: false,
+        show: true,
+        type: PERMISSION_TYPE_ENUM.MENU,
+        route: { path: '/wms/statistics/overdue', name: 'wms-statistics-overdue', component: '/wms/overdue/index' }
+      }
+    ]
+  },
+
+  // 3. 预约申请与出库管理
   {
     label: '出库管理',
     value: 1010,
@@ -223,9 +298,9 @@ export default [
     }
   },
 
-  // 6. 逾期管理与催办
+  // 6. 逾期台账
   {
-    label: '逾期催办统计',
+    label: '逾期台账',
     value: 1050,
     icon: 'time',
     permission: 'wms:overdue',

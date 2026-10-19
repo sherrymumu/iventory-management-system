@@ -1,33 +1,65 @@
 <template>
   <Container>
     <!-- 搜索筛选区 -->
-    <el-card shadow="never" class="mb-15">
+    <el-card shadow="never" class="mb-15 device-search-card">
       <SearchToolbar :model="queryForm" @search="fetchData" @reset="resetQuery">
-        <el-form-item label="关键词检索">
-          <el-input v-model="queryForm.keyword" placeholder="SN号 / 设备名称 / 卡号" clearable style="width: 220px" @keyup.enter="fetchData" />
+        <el-form-item label="SN码">
+          <el-input v-model="queryForm.sn" placeholder="请输入SN码" clearable @keyup.enter="fetchData" />
         </el-form-item>
-        <el-form-item label="设备状态">
-          <el-select v-model="queryForm.status" placeholder="全部状态" clearable style="width: 130px">
-            <el-option label="在库 (默认)" value="在库" />
-            <el-option label="借出" value="借出" />
-            <el-option label="已预约" value="已预约" />
-            <el-option label="损坏" value="损坏" />
-            <el-option label="丢失" value="丢失" />
+        <el-form-item label="设备名称">
+          <el-input v-model="queryForm.name" placeholder="请输入设备名称" clearable @keyup.enter="fetchData" />
+        </el-form-item>
+        <el-form-item label="设备类型">
+          <el-select v-model="queryForm.typeId" placeholder="请选择设备类型" clearable filterable>
+            <el-option v-for="t in typeList.filter(t => t.pid)" :key="t.id" :label="t.name" :value="t.id" />
           </el-select>
         </el-form-item>
         <el-form-item label="存放位置">
-          <el-select v-model="queryForm.location" placeholder="全部位置" clearable style="width: 140px">
-            <el-option label="对外借出" value="对外借出" />
-            <el-option label="技术支持" value="技术支持" />
+          <el-input v-model="queryForm.location" placeholder="请输入存放位置" clearable @keyup.enter="fetchData" />
+        </el-form-item>
+        <el-form-item label="设备品牌">
+          <el-select v-model="queryForm.brand" placeholder="请选择品牌" clearable filterable>
+            <el-option v-for="b in brandOptions" :key="b" :label="b" :value="b" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="设备型号">
+          <el-input v-model="queryForm.model" placeholder="请输入型号" clearable @keyup.enter="fetchData" />
+        </el-form-item>
+        <el-form-item label="设备状态">
+          <el-select v-model="queryForm.status" placeholder="请选择状态" clearable>
+            <el-option v-for="s in statusOptions" :key="s" :label="s" :value="s" />
           </el-select>
         </el-form-item>
         <template #actions>
-          <el-button type="success" icon="Upload" @click="openImportModal">Excel 批量导入设备</el-button>
-          <el-button type="primary" icon="Plus" @click="openCreateModal">新增设备录入</el-button>
+          <el-button type="success" @click="openImportModal">批量导入</el-button>
+          <el-button type="primary" @click="openCreateModal">新增设备</el-button>
         </template>
       </SearchToolbar>
     </el-card>
 
+    <el-row :gutter="16">
+      <!-- 左侧：设备类型树 -->
+      <el-col :xs="24" :sm="9" :md="7" :lg="6">
+        <el-card shadow="never" class="tree-card">
+          <div class="tree-header">
+            <span>设备类型</span>
+            <el-button text type="primary" size="small" @click="clearTypeTree">全部</el-button>
+          </div>
+          <el-tree
+            ref="typeTreeRef"
+            :data="typeTree"
+            :props="treeProps"
+            node-key="id"
+            default-expand-all
+            highlight-current
+            :expand-on-click-node="false"
+            @node-click="onTypeNodeClick"
+          />
+        </el-card>
+      </el-col>
+
+      <!-- 右侧：设备台账表格 -->
+      <el-col :xs="24" :sm="15" :md="17" :lg="18">
     <!-- 设备台账表格 -->
     <el-card shadow="never">
       <el-table :data="pagedData" v-loading="loading" stripe border>
@@ -87,9 +119,11 @@
         </el-table-column>
       </el-table>
       <div class="mt-15 flex-end">
-        <Pagination v-model:current="page.current" v-model:size="page.size" :total="tableData.length" :disabled="loading" />
+        <Pagination v-model:current="page.current" v-model:size="page.size" :total="treeFiltered.length" :disabled="loading" />
       </div>
     </el-card>
+      </el-col>
+    </el-row>
 
     <!-- 设备二维码展示与打印弹窗 -->
     <el-dialog v-model="qrVisible" title="设备专属二维码（扫码溯源）" width="460px" center>
@@ -208,16 +242,78 @@ const page = reactive({
   size: 10
 })
 
-const pagedData = computed(() => {
-  const start = (page.current - 1) * page.size
-  return tableData.value.slice(start, start + page.size)
+// 设备类型树（大类/子类层级）
+const typeTreeRef = useTemplateRef('typeTreeRef')
+const selectedTreeType = ref(null)
+const treeProps = { label: 'name', children: 'children' }
+
+const typeTree = computed(() => {
+  const list = typeList.value
+  const map = {}
+  const roots = []
+  list.forEach(i => { map[i.id] = { ...i } })
+  list.forEach(i => {
+    if (i.pid && map[i.pid]) {
+      (map[i.pid].children ||= []).push(map[i.id])
+    } else {
+      roots.push(map[i.id])
+    }
+  })
+  return roots
 })
 
-const queryForm = reactive({
-  keyword: '',
-  status: '',
-  location: ''
+// 收集某节点下的所有叶子（设备）类型 id
+const collectLeafTypeIds = (id) => {
+  const list = typeList.value
+  const childMap = {}
+  list.forEach(i => { if (i.pid) (childMap[i.pid] ||= []).push(i.id) })
+  const collect = (cur) => {
+    const kids = childMap[cur] || []
+    if (!kids.length) return [cur]
+    return kids.flatMap(collect)
+  }
+  return collect(id)
+}
+
+// 树筛选后的设备列表（默认未选中展示全部）
+const treeFiltered = computed(() => {
+  if (!selectedTreeType.value) return tableData.value
+  const ids = collectLeafTypeIds(selectedTreeType.value)
+  return tableData.value.filter(d => ids.includes(d.typeId))
 })
+
+const pagedData = computed(() => {
+  const start = (page.current - 1) * page.size
+  return treeFiltered.value.slice(start, start + page.size)
+})
+
+const onTypeNodeClick = (data) => {
+  selectedTreeType.value = data.id
+  page.current = 1
+}
+
+const clearTypeTree = () => {
+  selectedTreeType.value = null
+  typeTreeRef.value && typeTreeRef.value.setCurrentKey(null)
+  page.current = 1
+}
+
+const queryForm = reactive({
+  sn: '',
+  name: '',
+  typeId: null,
+  location: '',
+  brand: '',
+  model: '',
+  status: ''
+})
+
+// 数据字典：品牌 / 型号 / 设备状态 选项来源（对接后端时替换为字典接口数据）
+const brandOptions = ref([
+  'Sony', 'LiveU', 'TVU', 'Blackmagic', 'DJI', 'Sennheiser', '中国移动', '中国联通', '中国电信'
+])
+
+const statusOptions = ref(['在库', '借出', '已预约', '损坏', '丢失'])
 
 const qrVisible = ref(false)
 const currentDevice = ref(null)
@@ -266,9 +362,13 @@ const fetchTypes = async () => {
 }
 
 const resetQuery = () => {
-  queryForm.keyword = ''
-  queryForm.status = ''
+  queryForm.sn = ''
+  queryForm.name = ''
+  queryForm.typeId = null
   queryForm.location = ''
+  queryForm.brand = ''
+  queryForm.model = ''
+  queryForm.status = ''
   page.current = 1
   fetchData()
 }
@@ -461,5 +561,57 @@ onMounted(() => {
   font-size: 12px;
   color: #94a3b8;
   margin-top: 6px;
+}
+
+/* 搜索条件与按钮同一流式容器：条件依次排列（样式不变），按钮内嵌到末行（第二行）最右侧，关闭折叠/展开 */
+.device-search-card :deep(.search-toolbar) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+}
+.device-search-card :deep(.search-toolbar__form) {
+  display: contents;
+}
+.device-search-card :deep(.search-toolbar__form .el-form) {
+  display: contents;
+}
+.device-search-card :deep(.el-form-item) {
+  margin-bottom: 0;
+  margin-right: 0;
+  flex: 0 0 auto;
+}
+.device-search-card :deep(.el-form-item__content .el-input),
+.device-search-card :deep(.el-form-item__content .el-select) {
+  width: 170px;
+}
+.device-search-card :deep(.search-toolbar__actions) {
+  flex-shrink: 0;
+  margin-left: auto;
+  align-items: center;
+}
+/* 关闭 SearchToolbar 的折叠/展开功能 */
+.device-search-card :deep(.search-toolbar__form.is-collapsed) {
+  max-height: none !important;
+  overflow: visible !important;
+}
+.device-search-card :deep(.search-toolbar__toggle) {
+  display: none !important;
+}
+
+/* 左侧设备类型树 */
+.tree-card {
+  height: 100%;
+}
+.tree-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+.tree-card :deep(.el-tree) {
+  max-height: calc(100vh - 260px);
+  overflow: auto;
 }
 </style>

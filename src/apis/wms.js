@@ -74,18 +74,30 @@ export const getDeviceListApi = async (params = {}) => {
   }
   await mockDelay()
   let list = WmsStore.getDevices()
-  if (params.keyword) {
-    const kw = params.keyword.toLowerCase()
-    list = list.filter(i => (i.sn && i.sn.toLowerCase().includes(kw)) || (i.name && i.name.toLowerCase().includes(kw)) || (i.cardNo && i.cardNo.toLowerCase().includes(kw)))
+  if (params.sn) {
+    const kw = params.sn.toLowerCase()
+    list = list.filter(i => i.sn && i.sn.toLowerCase().includes(kw))
   }
-  if (params.status) {
-    list = list.filter(i => i.status === params.status)
-  }
-  if (params.location) {
-    list = list.filter(i => i.location === params.location)
+  if (params.name) {
+    const kw = params.name.toLowerCase()
+    list = list.filter(i => i.name && i.name.toLowerCase().includes(kw))
   }
   if (params.typeId) {
     list = list.filter(i => i.typeId === params.typeId)
+  }
+  if (params.location) {
+    const kw = params.location.toLowerCase()
+    list = list.filter(i => i.location && i.location.toLowerCase().includes(kw))
+  }
+  if (params.brand) {
+    list = list.filter(i => i.brand === params.brand)
+  }
+  if (params.model) {
+    const kw = params.model.toLowerCase()
+    list = list.filter(i => i.model && i.model.toLowerCase().includes(kw))
+  }
+  if (params.status) {
+    list = list.filter(i => i.status === params.status)
   }
   return { code: 0, message: 'success', data: { list, total: list.length } }
 }

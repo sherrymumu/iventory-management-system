@@ -12,7 +12,7 @@
     <el-row :gutter="16" class="metrics-row">
       <!-- 1. 设备总数 -->
       <el-col :xs="24" :sm="12" :md="12" :lg="4" :xl="4" class="col-metric-item">
-        <div class="metric-card">
+        <div class="metric-card clickable" @click="goStatus">
           <div class="metric-label">设备总数</div>
           <div class="metric-value font-bold text-main">1,286</div>
           <div class="metric-footer text-muted">
@@ -23,7 +23,7 @@
 
       <!-- 2. 在库数量 -->
       <el-col :xs="24" :sm="12" :md="12" :lg="5" :xl="5" class="col-metric-item">
-        <div class="metric-card">
+        <div class="metric-card clickable" @click="goStatus">
           <div class="metric-label">在库数量</div>
           <div class="metric-value font-bold text-success">954</div>
           <div class="metric-footer text-muted">
@@ -34,7 +34,7 @@
 
       <!-- 3. 借出数量 -->
       <el-col :xs="24" :sm="12" :md="12" :lg="5" :xl="5" class="col-metric-item">
-        <div class="metric-card">
+        <div class="metric-card clickable" @click="goStatus">
           <div class="metric-label">借出数量</div>
           <div class="metric-value font-bold text-primary">288</div>
           <div class="metric-footer text-muted">
@@ -45,7 +45,7 @@
 
       <!-- 4. 异常设备 -->
       <el-col :xs="24" :sm="12" :md="12" :lg="5" :xl="5" class="col-metric-item">
-        <div class="metric-card">
+        <div class="metric-card clickable" @click="goStatus">
           <div class="metric-label">异常设备</div>
           <div class="metric-value font-bold text-danger">44</div>
           <div class="metric-footer text-muted">
@@ -56,7 +56,7 @@
 
       <!-- 5. 本月借还次数 -->
       <el-col :xs="24" :sm="12" :md="12" :lg="5" :xl="5" class="col-metric-item">
-        <div class="metric-card">
+        <div class="metric-card clickable" @click="goStatus">
           <div class="metric-label">本月借还次数</div>
           <div class="metric-value font-bold text-main">156</div>
           <div class="metric-footer text-muted">
@@ -283,7 +283,11 @@
 
 <script setup>
 import * as echarts from 'echarts'
+import { useRouter } from 'vue-router'
 import { getDeviceTypeListApi } from '@/apis/wms'
+
+const router = useRouter()
+const goStatus = () => router.push('/wms/statistics/status')
 
 const timeRange = ref('year')
 const timeRangeLabel = computed(() => {
@@ -674,6 +678,14 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+}
+.metric-card.clickable {
+  cursor: pointer;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.metric-card.clickable:hover {
+  box-shadow: 0 2px 10px rgba(22, 119, 255, 0.15);
+  transform: translateY(-1px);
 }
 .metric-label {
   font-size: 12px;
